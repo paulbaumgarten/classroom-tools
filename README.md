@@ -55,3 +55,13 @@ Notes:
 - If all constraints cannot be fully satisfied, the groups maker still produces the most balanced result it can and reports remaining conflicts.
 
 * Live link: [https://paulbaumgarten.github.io/classroom-tools/class-groups-maker.html](https://paulbaumgarten.github.io/classroom-tools/class-groups-maker.html)
+
+## Classroom noise meter
+
+Monitors classroom noise using the device microphone on a 0-100 classroom scale with visual-only alerts.
+
+Includes adjustable trigger threshold, smoothing window, repeated violation counting with cooldown, and session stats for quiet-time incentives.
+
+Audio is processed locally in the browser and is not uploaded or recorded.
+
+* Live link: [https://paulbaumgarten.github.io/classroom-tools/classroom-noise-meter.html](https://paulbaumgarten.github.io/classroom-tools/classroom-noise-meter.html)

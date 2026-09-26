@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Classroom Noise Meter</title>
+  <style>
+    :root {
+      --bg-1: #0c1830;
+      --bg-2: #152a4f;
+      --panel: #f8fbff;
+      --ink: #142340;
+      --muted: #5a6d91;
+      --line: #d3ddf1;
+      --good: #178246;
+      --warn: #c87413;
+      --bad: #b52438;
+      --brand: #1f64c5;
+      --brand-soft: #e9f2ff;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Trebuchet MS", "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 10% 12%, rgba(255, 255, 255, 0.14), transparent 42%),
+        radial-gradient(circle at 90% 84%, rgba(245, 190, 96, 0.16), transparent 36%),
+        linear-gradient(145deg, var(--bg-1), var(--bg-2));
+      padding: 14px;
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      display: grid;
+      gap: 12px;
+    }
+
+    h1 {
+      margin: 0;
+      color: #f4f8ff;
+      font-size: 1.85rem;
+      letter-spacing: 0.2px;
+    }
+
+    .subtitle {
+      margin: 6px 0 0;
+      color: #c9d8f9;
+      font-size: 0.95rem;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--panel);
+      padding: 14px;
+      box-shadow: 0 12px 26px rgba(10, 23, 45, 0.24);
+    }
+
+    .alert {
+      border-radius: 12px;
+      border: 1px solid #f3c5cb;
+      background: #ffe8eb;
+      color: var(--bad);
+      padding: 10px;
+      font-weight: 800;
+      text-align: center;
+      opacity: 0;
+      transform: translateY(-4px);
+      transition: opacity 0.2s ease, transform 0.2s ease;
+      pointer-events: none;
+    }
+
+    .alert.on {
+      opacity: 1;
+      transform: translateY(0);
+      animation: alertPulse 0.7s linear infinite;
+    }
+
+    @keyframes alertPulse {
+      0%, 100% { box-shadow: 0 0 0 rgba(181, 36, 56, 0); }
+      50% { box-shadow: 0 0 24px rgba(181, 36, 56, 0.35); }
+    }
+
+    .grid {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: 1.2fr 0.9fr;
+    }
+
+    .meter {
+      border: 1px solid #bfd0ef;
+      border-radius: 14px;
+      background: linear-gradient(180deg, #fff, #f1f6ff);
+      padding: 12px;
+    }
+
+    .dial {
+      position: relative;
+      border-radius: 16px;
+      border: 1px solid #c8d7f1;
+      background: #0e1b37;
+      min-height: 230px;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+    }
+
+    .dial-glow {
+      position: absolute;
+      width: 300px;
+      height: 300px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(35, 224, 126, 0.48) 0%, rgba(35, 224, 126, 0.04) 62%, transparent 70%);
+      opacity: 0.78;
+      transition: background 0.16s linear;
+    }
+
+    .dial-value {
+      position: relative;
+      z-index: 2;
+      color: #f7fbff;
+      text-align: center;
+      text-shadow: 0 2px 20px rgba(0, 0, 0, 0.35);
+    }
+
+    .dial-value .n {
+      display: block;
+      font-size: clamp(3.1rem, 9vw, 5.4rem);
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .dial-value .k {
+      display: block;
+      letter-spacing: 0.4px;
+      font-size: 0.95rem;
+      opacity: 0.95;
+    }
+
+    .bar-wrap {
+      margin-top: 10px;
+      border: 1px solid #c8d7f1;
+      border-radius: 999px;
+      height: 22px;
+      overflow: hidden;
+      background: #e7eefc;
+    }
+
+    .bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #20a254, #f2a125 64%, #d12f45 100%);
+      transition: width 0.07s linear;
+    }
+
+    .threshold-pin {
+      margin-top: 6px;
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .stat {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fff;
+      padding: 8px;
+      text-align: center;
+    }
+
+    .stat .n {
+      display: block;
+      font-size: 1.45rem;
+      font-weight: 800;
+    }
+
+    .stat .k {
+      color: var(--muted);
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    .controls {
+      border: 1px solid #bfd0ef;
+      border-radius: 14px;
+      background: linear-gradient(180deg, #fff, #f4f8ff);
+      padding: 12px;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+
+    label {
+      font-size: 0.79rem;
+      text-transform: uppercase;
+      letter-spacing: 0.45px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    input, button {
+      font: inherit;
+    }
+
+    input[type="range"] {
+      width: 100%;
+    }
+
+    input[type="number"] {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 8px 10px;
+      width: 100%;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 88px;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    button {
+      border: 1px solid transparent;
+      border-radius: 999px;
+      padding: 8px 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.12s ease;
+    }
+
+    button:hover { transform: translateY(-1px); }
+    button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    .btn-primary { background: var(--brand); color: #fff; }
+    .btn-soft { background: var(--brand-soft); color: var(--brand); border-color: #c6daf8; }
+    .btn-danger { background: #ffe9ee; color: #93283a; border-color: #efc1c9; }
+
+    details {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 8px;
+      background: #fff;
+      margin-top: 8px;
+    }
+
+    summary {
+      cursor: pointer;
+      font-weight: 700;
+      color: var(--muted);
+    }
+
+    #status {
+      margin-top: 8px;
+      color: var(--muted);
+      min-height: 20px;
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 920px) {
+      .grid { grid-template-columns: 1fr; }
+      .dial { min-height: 200px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section>
+      <h1>Classroom Noise Meter</h1>
+      <p class="subtitle">Visual-only alerts. Audio is processed locally in your browser and is not uploaded or recorded.</p>
+    </section>
+
+    <div id="alert" class="alert">Too loud - quiet voices now</div>
+
+    <section class="grid">
+      <section class="meter panel">
+        <div class="dial" id="dial">
+          <div class="dial-glow" id="dial-glow"></div>
+          <div class="dial-value">
+            <span class="n" id="smoothed-level">0</span>
+            <span class="k">Smoothed Classroom Level</span>
+            <span class="k">Instant: <span id="instant-level">0</span></span>
+          </div>
+        </div>
+
+        <div class="bar-wrap"><div id="level-bar" class="bar"></div></div>
+        <div class="threshold-pin" id="threshold-pin">Threshold: 62</div>
+
+        <div class="stats">
+          <div class="stat"><span class="n" id="violations">0</span><span class="k">Violations</span></div>
+          <div class="stat"><span class="n" id="elapsed">00:00</span><span class="k">Elapsed</span></div>
+          <div class="stat"><span class="n" id="vpm">0.00</span><span class="k">Per Minute</span></div>
+          <div class="stat"><span class="n" id="goal-status">On Track</span><span class="k">Goal Status</span></div>
+        </div>
+      </section>
+
+      <section class="controls panel">
+        <div class="btn-row">
+          <button id="start" class="btn-primary">Start Monitoring</button>
+          <button id="stop" class="btn-danger" disabled>Stop</button>
+          <button id="reset" class="btn-soft">Reset Session</button>
+        </div>
+
+        <div class="field">
+          <label for="threshold-range">Trigger Threshold (0-100)</label>
+          <div class="row">
+            <input id="threshold-range" type="range" min="0" max="100" step="1">
+            <input id="threshold-number" type="number" min="0" max="100" step="1">
+          </div>
+        </div>
+
+        <details>
+          <summary>Advanced Settings</summary>
+          <div class="field">
+            <label for="window-seconds">Smoothing Window (seconds)</label>
+            <input id="window-seconds" type="number" min="0.2" max="10" step="0.1">
+          </div>
+          <div class="field">
+            <label for="hold-seconds">Hold Time Above Threshold (seconds)</label>
+            <input id="hold-seconds" type="number" min="0.1" max="10" step="0.1">
+          </div>
+          <div class="field">
+            <label for="cooldown-seconds">Violation Cooldown (seconds)</label>
+            <input id="cooldown-seconds" type="number" min="0.5" max="30" step="0.5">
+          </div>
+          <div class="field">
+            <label for="goal-max">Goal Max Violations</label>
+            <input id="goal-max" type="number" min="1" max="500" step="1">
+          </div>
+        </details>
+
+        <div id="status">Ready. Press Start Monitoring and allow microphone access.</div>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    'use strict';
+
+    const SETTINGS_KEY = 'classroomTools.noiseMeter.v1';
+
+    const defaults = {
+      threshold: 62,
+      windowSeconds: 2,
+      holdSeconds: 0.6,
+      cooldownSeconds: 5,
+      goalMaxViolations: 10
+    };
+
+    const state = {
+      ...defaults,
+      isMonitoring: false,
+      instantLevel: 0,
+      smoothedLevel: 0,
+      violations: 0,
+      audioContext: null,
+      analyser: null,
+      stream: null,
+      sampleBuffer: null,
+      updateTimer: null,
+      history: [],
+      aboveSince: null,
+      lastViolationAt: null,
+      firstViolationInCurrentLoudPeriod: false,
+      sessionStartAt: null,
+      accumulatedMs: 0
+    };
+
+    const el = {
+      alert: document.getElementById('alert'),
+      dialGlow: document.getElementById('dial-glow'),
+      smoothedLevel: document.getElementById('smoothed-level'),
+      instantLevel: document.getElementById('instant-level'),
+      levelBar: document.getElementById('level-bar'),
+      thresholdPin: document.getElementById('threshold-pin'),
+      violations: document.getElementById('violations'),
+      elapsed: document.getElementById('elapsed'),
+      vpm: document.getElementById('vpm'),
+      goalStatus: document.getElementById('goal-status'),
+      start: document.getElementById('start'),
+      stop: document.getElementById('stop'),
+      reset: document.getElementById('reset'),
+      thresholdRange: document.getElementById('threshold-range'),
+      thresholdNumber: document.getElementById('threshold-number'),
+      windowSeconds: document.getElementById('window-seconds'),
+      holdSeconds: document.getElementById('hold-seconds'),
+      cooldownSeconds: document.getElementById('cooldown-seconds'),
+      goalMax: document.getElementById('goal-max'),
+      status: document.getElementById('status')
+    };
+
+    function clamp(n, min, max) {
+      return Math.min(max, Math.max(min, n));
+    }
+
+    function loadSettings() {
+      try {
+        const raw = localStorage.getItem(SETTINGS_KEY);
+        if (!raw) return;
+        const parsed = JSON.parse(raw);
+        if (!parsed || typeof parsed !== 'object') return;
+        state.threshold = clamp(Number(parsed.threshold) || defaults.threshold, 0, 100);
+        state.windowSeconds = clamp(Number(parsed.windowSeconds) || defaults.windowSeconds, 0.2, 10);
+        state.holdSeconds = clamp(Number(parsed.holdSeconds) || defaults.holdSeconds, 0.1, 10);
+        state.cooldownSeconds = clamp(Number(parsed.cooldownSeconds) || defaults.cooldownSeconds, 0.5, 30);
+        state.goalMaxViolations = clamp(Number(parsed.goalMaxViolations) || defaults.goalMaxViolations, 1, 500);
+      } catch (_err) {
+        el.status.textContent = 'Could not read saved settings. Using defaults.';
+      }
+    }
+
+    function saveSettings() {
+      const payload = {
+        threshold: state.threshold,
+        windowSeconds: state.windowSeconds,
+        holdSeconds: state.holdSeconds,
+        cooldownSeconds: state.cooldownSeconds,
+        goalMaxViolations: state.goalMaxViolations
+      };
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(payload));
+    }
+
+    function renderSettings() {
+      el.thresholdRange.value = String(state.threshold);
+      el.thresholdNumber.value = String(state.threshold);
+      el.windowSeconds.value = String(state.windowSeconds);
+      el.holdSeconds.value = String(state.holdSeconds);
+      el.cooldownSeconds.value = String(state.cooldownSeconds);
+      el.goalMax.value = String(state.goalMaxViolations);
+      el.thresholdPin.textContent = `Threshold: ${state.threshold}`;
+    }
+
+    function getElapsedMs(now) {
+      if (!state.sessionStartAt) return state.accumulatedMs;
+      return state.accumulatedMs + (now - state.sessionStartAt);
+    }
+
+    function formatElapsed(ms) {
+      const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+      const mins = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
+      const secs = (totalSeconds % 60).toString().padStart(2, '0');
+      return `${mins}:${secs}`;
+    }
+
+    function levelToColor(level) {
+      if (level >= state.threshold) return '#dc334a';
+      if (level >= state.threshold * 0.82) return '#f1a322';
+      return '#29b15f';
+    }
+
+    function updateGoalStatus() {
+      const now = performance.now();
+      const elapsedMin = getElapsedMs(now) / 60000;
+      const vpm = elapsedMin > 0 ? state.violations / elapsedMin : 0;
+
+      el.violations.textContent = String(state.violations);
+      el.elapsed.textContent = formatElapsed(getElapsedMs(now));
+      el.vpm.textContent = vpm.toFixed(2);
+
+      if (state.violations <= state.goalMaxViolations) {
+        el.goalStatus.textContent = 'On Track';
+        el.goalStatus.style.color = 'var(--good)';
+      } else {
+        el.goalStatus.textContent = 'Over Goal';
+        el.goalStatus.style.color = 'var(--bad)';
+      }
+    }
+
+    function renderMeter() {
+      const level = clamp(state.smoothedLevel, 0, 100);
+      const instant = clamp(state.instantLevel, 0, 100);
+      const color = levelToColor(level);
+
+      el.smoothedLevel.textContent = String(Math.round(level));
+      el.instantLevel.textContent = String(Math.round(instant));
+      el.levelBar.style.width = `${level}%`;
+      el.dialGlow.style.background = `radial-gradient(circle, ${color}99 0%, ${color}14 62%, transparent 70%)`;
+      el.thresholdPin.textContent = `Threshold: ${state.threshold}`;
+
+      const tooLoud = level >= state.threshold;
+      el.alert.classList.toggle('on', tooLoud);
+    }
+
+    function calculateLevelFromAudio() {
+      if (!state.analyser || !state.sampleBuffer) return 0;
+      state.analyser.getFloatTimeDomainData(state.sampleBuffer);
+      let sum = 0;
+      for (let i = 0; i < state.sampleBuffer.length; i += 1) {
+        const sample = state.sampleBuffer[i];
+        sum += sample * sample;
+      }
+      const rms = Math.sqrt(sum / state.sampleBuffer.length);
+      const db = 20 * Math.log10(Math.max(rms, 1e-7));
+      const minDb = -68;
+      const maxDb = -12;
+      const scaled = ((db - minDb) / (maxDb - minDb)) * 100;
+      return clamp(scaled, 0, 100);
+    }
+
+    function calculateSmoothedLevel(now, instant) {
+      state.history.push({ t: now, v: instant });
+      const cutoff = now - (state.windowSeconds * 1000);
+      while (state.history.length && state.history[0].t < cutoff) {
+        state.history.shift();
+      }
+      if (!state.history.length) return instant;
+      const sum = state.history.reduce((n, pt) => n + pt.v, 0);
+      return sum / state.history.length;
+    }
+
+    function trackViolations(now) {
+      const above = state.smoothedLevel >= state.threshold;
+      if (!above) {
+        state.aboveSince = null;
+        state.firstViolationInCurrentLoudPeriod = false;
+        return;
+      }
+
+      if (state.aboveSince === null) {
+        state.aboveSince = now;
+      }
+
+      if (!state.firstViolationInCurrentLoudPeriod) {
+        if ((now - state.aboveSince) >= state.holdSeconds * 1000) {
+          state.violations += 1;
+          state.lastViolationAt = now;
+          state.firstViolationInCurrentLoudPeriod = true;
+        }
+        return;
+      }
+
+      if (state.lastViolationAt && (now - state.lastViolationAt) >= state.cooldownSeconds * 1000) {
+        state.violations += 1;
+        state.lastViolationAt = now;
+      }
+    }
+
+    function tick() {
+      if (!state.isMonitoring) {
+        updateGoalStatus();
+        return;
+      }
+
+      const now = performance.now();
+      state.instantLevel = calculateLevelFromAudio();
+      state.smoothedLevel = calculateSmoothedLevel(now, state.instantLevel);
+      trackViolations(now);
+      renderMeter();
+      updateGoalStatus();
+    }
+
+    async function startMonitoring() {
+      if (state.isMonitoring) return;
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true
+          },
+          video: false
+        });
+
+        state.stream = stream;
+        state.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const source = state.audioContext.createMediaStreamSource(stream);
+        state.analyser = state.audioContext.createAnalyser();
+        state.analyser.fftSize = 2048;
+        source.connect(state.analyser);
+        state.sampleBuffer = new Float32Array(state.analyser.fftSize);
+
+        state.isMonitoring = true;
+        state.sessionStartAt = performance.now();
+        state.history = [];
+        state.aboveSince = null;
+        state.firstViolationInCurrentLoudPeriod = false;
+
+        if (state.updateTimer) clearInterval(state.updateTimer);
+        state.updateTimer = setInterval(tick, 60);
+
+        el.start.disabled = true;
+        el.stop.disabled = false;
+        el.status.textContent = 'Monitoring live microphone input.';
+      } catch (_err) {
+        el.status.textContent = 'Microphone access denied or unavailable.';
+      }
+    }
+
+    function stopMonitoring() {
+      if (!state.isMonitoring) return;
+      state.isMonitoring = false;
+      state.accumulatedMs = getElapsedMs(performance.now());
+      state.sessionStartAt = null;
+
+      if (state.updateTimer) {
+        clearInterval(state.updateTimer);
+        state.updateTimer = null;
+      }
+
+      if (state.stream) {
+        for (const track of state.stream.getTracks()) track.stop();
+      }
+      state.stream = null;
+
+      if (state.audioContext) {
+        state.audioContext.close();
+      }
+      state.audioContext = null;
+      state.analyser = null;
+      state.sampleBuffer = null;
+      state.history = [];
+      state.aboveSince = null;
+      state.firstViolationInCurrentLoudPeriod = false;
+
+      el.start.disabled = false;
+      el.stop.disabled = true;
+      el.status.textContent = 'Monitoring stopped.';
+      el.alert.classList.remove('on');
+      updateGoalStatus();
+    }
+
+    function resetSession() {
+      state.violations = 0;
+      state.accumulatedMs = 0;
+      state.sessionStartAt = state.isMonitoring ? performance.now() : null;
+      state.history = [];
+      state.aboveSince = null;
+      state.firstViolationInCurrentLoudPeriod = false;
+      state.lastViolationAt = null;
+      state.instantLevel = 0;
+      state.smoothedLevel = 0;
+      renderMeter();
+      updateGoalStatus();
+      el.status.textContent = state.isMonitoring ? 'Session reset. Monitoring continues.' : 'Session reset.';
+    }
+
+    function applyThreshold(value) {
+      state.threshold = clamp(Number(value) || defaults.threshold, 0, 100);
+      el.thresholdRange.value = String(state.threshold);
+      el.thresholdNumber.value = String(state.threshold);
+      saveSettings();
+      renderMeter();
+    }
+
+    function applyAdvancedSettings() {
+      state.windowSeconds = clamp(Number(el.windowSeconds.value) || defaults.windowSeconds, 0.2, 10);
+      state.holdSeconds = clamp(Number(el.holdSeconds.value) || defaults.holdSeconds, 0.1, 10);
+      state.cooldownSeconds = clamp(Number(el.cooldownSeconds.value) || defaults.cooldownSeconds, 0.5, 30);
+      state.goalMaxViolations = clamp(Number(el.goalMax.value) || defaults.goalMaxViolations, 1, 500);
+      renderSettings();
+      saveSettings();
+      updateGoalStatus();
+    }
+
+    function wireEvents() {
+      el.start.addEventListener('click', startMonitoring);
+      el.stop.addEventListener('click', stopMonitoring);
+      el.reset.addEventListener('click', resetSession);
+
+      el.thresholdRange.addEventListener('input', (e) => applyThreshold(e.target.value));
+      el.thresholdNumber.addEventListener('input', (e) => applyThreshold(e.target.value));
+
+      el.windowSeconds.addEventListener('change', applyAdvancedSettings);
+      el.holdSeconds.addEventListener('change', applyAdvancedSettings);
+      el.cooldownSeconds.addEventListener('change', applyAdvancedSettings);
+      el.goalMax.addEventListener('change', applyAdvancedSettings);
+
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden && state.isMonitoring) {
+          stopMonitoring();
+          el.status.textContent = 'Monitoring paused because the tab is hidden.';
+        }
+      });
+    }
+
+    function init() {
+      loadSettings();
+      renderSettings();
+      renderMeter();
+      updateGoalStatus();
+      wireEvents();
+    }
+
+    init();
+  </script>
+</body>
+</html>
