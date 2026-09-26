@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Class Groups Maker</title>
+  <style>
+    :root {
+      --bg-a: #eef6ff;
+      --bg-b: #fff6e8;
+      --panel: #ffffff;
+      --ink: #17233b;
+      --muted: #526080;
+      --line: #d5dff0;
+      --brand: #1e5fba;
+      --brand-soft: #eaf2ff;
+      --danger-soft: #ffe8ec;
+      --success-soft: #e8f7ec;
+      --warning-soft: #fff2df;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Trebuchet MS", "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 12% 14%, #ffffff 0%, transparent 40%),
+        radial-gradient(circle at 90% 82%, #ffe9ca 0%, transparent 36%),
+        linear-gradient(135deg, var(--bg-a), var(--bg-b));
+      padding: 16px;
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      display: grid;
+      gap: 12px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: 0 10px 24px rgba(26, 49, 90, 0.1);
+      padding: 14px;
+    }
+
+    h1 {
+      margin: 0 0 4px;
+      font-size: 1.75rem;
+      letter-spacing: 0.2px;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1.05fr 1fr;
+      gap: 12px;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+
+    label {
+      font-size: 0.8rem;
+      color: var(--muted);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.45px;
+    }
+
+    input, select, textarea, button {
+      font: inherit;
+    }
+
+    input, select, textarea {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px 11px;
+      color: var(--ink);
+      background: #fff;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: 2px solid #dce9ff;
+      border-color: #95b2e6;
+    }
+
+    textarea {
+      min-height: 210px;
+      resize: vertical;
+      line-height: 1.32;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    button {
+      border: 1px solid transparent;
+      border-radius: 999px;
+      padding: 8px 14px;
+      cursor: pointer;
+      font-weight: 700;
+      transition: transform 0.12s ease;
+    }
+
+    button:hover { transform: translateY(-1px); }
+    button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    .btn-primary { background: var(--brand); color: #fff; }
+    .btn-soft { background: var(--brand-soft); color: var(--brand); border-color: #c9dcfb; }
+    .btn-danger { background: var(--danger-soft); color: #982b39; border-color: #ebb9c2; }
+    .btn-success { background: var(--success-soft); color: #145f36; border-color: #b8e1c5; }
+    .btn-warning { background: var(--warning-soft); color: #8f4b10; border-color: #efd3a8; }
+
+    .groups-tools {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: end;
+      margin-bottom: 10px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .stat {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 8px;
+      text-align: center;
+    }
+
+    .stat .n {
+      display: block;
+      font-weight: 800;
+      font-size: 1.3rem;
+    }
+
+    .stat .k {
+      color: var(--muted);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    .groups-grid {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    }
+
+    .group-card {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: linear-gradient(165deg, #ffffff, #f4f8ff);
+      padding: 10px;
+    }
+
+    .group-title {
+      font-weight: 800;
+      margin-bottom: 2px;
+    }
+
+    .group-count {
+      color: var(--muted);
+      font-size: 0.83rem;
+      margin-bottom: 8px;
+    }
+
+    .group-list {
+      margin: 0;
+      padding-left: 18px;
+      display: grid;
+      gap: 3px;
+    }
+
+    .placeholder {
+      border: 1px dashed #bdcae4;
+      border-radius: 14px;
+      padding: 16px;
+      text-align: center;
+      color: var(--muted);
+      background: #fbfdff;
+    }
+
+    #toast {
+      min-height: 20px;
+      color: var(--muted);
+      font-size: 0.88rem;
+      margin-top: 10px;
+    }
+
+    @media (max-width: 880px) {
+      body { padding: 12px; }
+      .layout { grid-template-columns: 1fr; }
+      .groups-tools { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="panel">
+      <h1>Class Groups Maker</h1>
+      <p class="subtitle">Client-side only. Uses the same classlist storage and JSON format as the random student picker.</p>
+    </section>
+
+    <section class="layout">
+      <div class="panel">
+        <div class="field">
+          <label for="class-select">Saved Classlists</label>
+          <select id="class-select"></select>
+        </div>
+
+        <div class="field">
+          <label for="class-name">Class Name</label>
+          <input id="class-name" type="text" maxlength="80" placeholder="Year 9 Science - Period 2">
+        </div>
+
+        <div class="field">
+          <label for="class-names">Student Names (one per line)</label>
+          <textarea id="class-names" placeholder="Alex Tan&#10;Riley Jones&#10;Jordan Singh"></textarea>
+        </div>
+
+        <div class="toolbar">
+          <button id="save-class" class="btn-primary">Save / Update</button>
+          <button id="delete-class" class="btn-danger">Delete Classlist</button>
+          <button id="import-json" class="btn-soft">Import JSON</button>
+          <button id="export-json" class="btn-soft">Export JSON</button>
+        </div>
+
+        <div id="toast"></div>
+      </div>
+
+      <div class="panel">
+        <div class="stats">
+          <div class="stat"><span class="n" id="students-count">0</span><span class="k">Students</span></div>
+          <div class="stat"><span class="n" id="group-count">0</span><span class="k">Groups</span></div>
+          <div class="stat"><span class="n" id="size-range">-</span><span class="k">Size Range</span></div>
+        </div>
+
+        <div class="groups-tools">
+          <div class="field" style="margin:0;">
+            <label for="groups-input">Number of groups</label>
+            <input id="groups-input" type="number" min="1" step="1" value="4">
+          </div>
+          <div class="toolbar">
+            <button id="generate" class="btn-primary">Generate Groups</button>
+            <button id="regenerate" class="btn-warning">Regenerate</button>
+            <button id="copy" class="btn-success">Copy</button>
+            <button id="print" class="btn-soft">Print</button>
+          </div>
+        </div>
+
+        <div id="groups-output" class="placeholder">Choose a classlist and generate groups.</div>
+      </div>
+    </section>
+  </main>
+
+  <input type="file" id="json-file" accept="application/json,.json" style="display:none">
+
+  <script>
+    'use strict';
+
+    const STORAGE_KEY = 'classroomTools.randomStudentPicker.v1';
+    const EXPORT_VERSION = 1;
+
+    const state = {
+      classlists: {},
+      selectedClass: '',
+      sourceNames: [],
+      groups: [],
+      lastGroupCount: 0
+    };
+
+    const el = {
+      classSelect: document.getElementById('class-select'),
+      className: document.getElementById('class-name'),
+      classNames: document.getElementById('class-names'),
+      saveClass: document.getElementById('save-class'),
+      deleteClass: document.getElementById('delete-class'),
+      importJson: document.getElementById('import-json'),
+      exportJson: document.getElementById('export-json'),
+      jsonFile: document.getElementById('json-file'),
+      toast: document.getElementById('toast'),
+      studentsCount: document.getElementById('students-count'),
+      groupCount: document.getElementById('group-count'),
+      sizeRange: document.getElementById('size-range'),
+      groupsInput: document.getElementById('groups-input'),
+      generate: document.getElementById('generate'),
+      regenerate: document.getElementById('regenerate'),
+      copy: document.getElementById('copy'),
+      print: document.getElementById('print'),
+      groupsOutput: document.getElementById('groups-output')
+    };
+
+    function showToast(message) {
+      el.toast.textContent = message;
+    }
+
+    function normalizeName(name) {
+      return String(name || '').trim().replace(/\s+/g, ' ');
+    }
+
+    function parseNames(text) {
+      const lines = String(text || '').split(/\r?\n/).map(normalizeName).filter(Boolean);
+      const unique = [];
+      const seen = new Set();
+      for (const line of lines) {
+        const key = line.toLowerCase();
+        if (seen.has(key)) continue;
+        seen.add(key);
+        unique.push(line);
+      }
+      return unique;
+    }
+
+    function pairKey(a, b) {
+      return a.toLowerCase() < b.toLowerCase() ? `${a}__${b}` : `${b}__${a}`;
+    }
+
+    function normalizeLockPairs(rawPairs, validNames) {
+      if (!Array.isArray(rawPairs) || !validNames.length) return [];
+
+      const lookup = new Map();
+      for (const name of validNames) {
+        lookup.set(name.toLowerCase(), name);
+      }
+
+      const out = [];
+      const seen = new Set();
+      for (const pair of rawPairs) {
+        if (!Array.isArray(pair) || pair.length < 2) continue;
+        const aRaw = normalizeName(pair[0]);
+        const bRaw = normalizeName(pair[1]);
+        if (!aRaw || !bRaw) continue;
+        const a = lookup.get(aRaw.toLowerCase());
+        const b = lookup.get(bRaw.toLowerCase());
+        if (!a || !b || a === b) continue;
+        const key = pairKey(a, b);
+        if (seen.has(key)) continue;
+        seen.add(key);
+        out.push([a, b]);
+      }
+      return out;
+    }
+
+    function buildLockMap(lockPairs) {
+      const map = new Map();
+      for (const [a, b] of lockPairs) {
+        if (!map.has(a)) map.set(a, new Set());
+        if (!map.has(b)) map.set(b, new Set());
+        map.get(a).add(b);
+        map.get(b).add(a);
+      }
+      return map;
+    }
+
+    function countLockViolations(groups, lockMap) {
+      let violations = 0;
+      for (const group of groups) {
+        for (let i = 0; i < group.length; i += 1) {
+          for (let j = i + 1; j < group.length; j += 1) {
+            const conflicts = lockMap.get(group[i]);
+            if (conflicts && conflicts.has(group[j])) {
+              violations += 1;
+            }
+          }
+        }
+      }
+      return violations;
+    }
+
+    function groupSizes(totalStudents, groupCount) {
+      const base = Math.floor(totalStudents / groupCount);
+      const remainder = totalStudents % groupCount;
+      const sizes = [];
+      for (let i = 0; i < groupCount; i += 1) {
+        sizes.push(base + (i < remainder ? 1 : 0));
+      }
+      return sizes;
+    }
+
+    function simpleBalancedGroups(names, count) {
+      const mixed = shuffled(names);
+      const sizes = groupSizes(mixed.length, count);
+      const groups = [];
+      let cursor = 0;
+      for (const size of sizes) {
+        groups.push(mixed.slice(cursor, cursor + size));
+        cursor += size;
+      }
+      return groups;
+    }
+
+    function constrainedBalancedGroups(names, count, lockPairs) {
+      const sizes = groupSizes(names.length, count);
+      const lockMap = buildLockMap(lockPairs);
+      const maxAttempts = 600;
+      let bestGroups = null;
+      let bestViolations = Number.POSITIVE_INFINITY;
+
+      for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+        const candidate = simpleBalancedGroups(names, count);
+        const violations = countLockViolations(candidate, lockMap);
+        if (violations < bestViolations) {
+          bestGroups = candidate;
+          bestViolations = violations;
+        }
+        if (violations === 0) {
+          return { groups: candidate, violations: 0 };
+        }
+      }
+
+      const adjacency = lockMap;
+      const byConstraint = [...names].sort((a, b) => {
+        const aC = adjacency.get(a) ? adjacency.get(a).size : 0;
+        const bC = adjacency.get(b) ? adjacency.get(b).size : 0;
+        if (aC === bC) return Math.random() - 0.5;
+        return bC - aC;
+      });
+
+      const groups = Array.from({ length: count }, () => []);
+      const remaining = [...sizes];
+
+      for (const student of byConstraint) {
+        const banned = adjacency.get(student) || new Set();
+        let chosen = -1;
+        let bestCapacity = -1;
+
+        for (let i = 0; i < groups.length; i += 1) {
+          if (remaining[i] <= 0) continue;
+          const hasConflict = groups[i].some((name) => banned.has(name));
+          if (!hasConflict && remaining[i] > bestCapacity) {
+            chosen = i;
+            bestCapacity = remaining[i];
+          }
+        }
+
+        if (chosen === -1) {
+          let lowestPenalty = Number.POSITIVE_INFINITY;
+          for (let i = 0; i < groups.length; i += 1) {
+            if (remaining[i] <= 0) continue;
+            const penalty = groups[i].reduce((n, name) => n + (banned.has(name) ? 1 : 0), 0);
+            if (penalty < lowestPenalty) {
+              lowestPenalty = penalty;
+              chosen = i;
+            }
+          }
+        }
+
+        groups[chosen].push(student);
+        remaining[chosen] -= 1;
+      }
+
+      const greedyViolations = countLockViolations(groups, lockMap);
+      if (greedyViolations < bestViolations) {
+        return { groups, violations: greedyViolations };
+      }
+      return { groups: bestGroups, violations: bestViolations };
+    }
+
+    function readStoragePayload() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return {};
+        const parsed = JSON.parse(raw);
+        return parsed && typeof parsed === 'object' ? parsed : {};
+      } catch (_err) {
+        return {};
+      }
+    }
+
+    function saveStorage() {
+      const payload = readStoragePayload();
+      payload.version = EXPORT_VERSION;
+      payload.selectedClass = state.selectedClass;
+      payload.classlists = state.classlists;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+    }
+
+    function loadStorage() {
+      const payload = readStoragePayload();
+      if (payload.classlists && typeof payload.classlists === 'object') {
+        state.classlists = payload.classlists;
+      }
+      if (typeof payload.selectedClass === 'string') {
+        state.selectedClass = payload.selectedClass;
+      }
+    }
+
+    function classNamesSorted() {
+      return Object.keys(state.classlists).sort((a, b) => a.localeCompare(b));
+    }
+
+    function renderClassSelect() {
+      const names = classNamesSorted();
+      el.classSelect.innerHTML = '';
+      if (!names.length) {
+        const opt = document.createElement('option');
+        opt.value = '';
+        opt.textContent = 'No classlists saved yet';
+        el.classSelect.appendChild(opt);
+        el.classSelect.disabled = true;
+        state.selectedClass = '';
+        state.sourceNames = [];
+        state.groups = [];
+        return;
+      }
+
+      el.classSelect.disabled = false;
+      for (const name of names) {
+        const opt = document.createElement('option');
+        opt.value = name;
+        opt.textContent = name;
+        el.classSelect.appendChild(opt);
+      }
+
+      if (!names.includes(state.selectedClass)) {
+        state.selectedClass = names[0];
+      }
+      el.classSelect.value = state.selectedClass;
+    }
+
+    function loadSelectedClass() {
+      const className = state.selectedClass;
+      const entry = state.classlists[className];
+      state.groups = [];
+
+      if (!entry || !Array.isArray(entry.names)) {
+        el.className.value = '';
+        el.classNames.value = '';
+        state.sourceNames = [];
+        renderGroups();
+        updateStats();
+        return;
+      }
+
+      const names = entry.names.map(normalizeName).filter(Boolean);
+      state.sourceNames = names;
+      el.className.value = className;
+      el.classNames.value = names.join('\n');
+      renderGroups();
+      updateStats();
+      saveStorage();
+    }
+
+    function updateStats() {
+      el.studentsCount.textContent = String(state.sourceNames.length);
+      el.groupCount.textContent = String(state.groups.length);
+      if (!state.groups.length) {
+        el.sizeRange.textContent = '-';
+        return;
+      }
+      const sizes = state.groups.map((group) => group.length);
+      const min = Math.min(...sizes);
+      const max = Math.max(...sizes);
+      el.sizeRange.textContent = min === max ? String(min) : `${min}-${max}`;
+    }
+
+    function renderGroups() {
+      if (!state.groups.length) {
+        el.groupsOutput.className = 'placeholder';
+        el.groupsOutput.innerHTML = 'Choose a classlist and generate groups.';
+        updateStats();
+        return;
+      }
+
+      const html = state.groups.map((group, idx) => {
+        const items = group.map((name) => `<li>${escapeHtml(name)}</li>`).join('');
+        return `
+          <article class="group-card">
+            <div class="group-title">Group ${idx + 1}</div>
+            <div class="group-count">${group.length} students</div>
+            <ol class="group-list">${items}</ol>
+          </article>
+        `;
+      }).join('');
+
+      el.groupsOutput.className = 'groups-grid';
+      el.groupsOutput.innerHTML = html;
+      updateStats();
+    }
+
+    function escapeHtml(text) {
+      return text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function saveOrUpdateClass() {
+      const className = normalizeName(el.className.value);
+      const names = parseNames(el.classNames.value);
+
+      if (!className) {
+        showToast('Enter a class name first.');
+        return;
+      }
+      if (!names.length) {
+        showToast('Enter at least one student name.');
+        return;
+      }
+
+      const existing = state.classlists[className] || {};
+      const lockPairs = normalizeLockPairs(existing.lockPairs, names);
+      state.classlists[className] = {
+        names,
+        lockPairs,
+        updatedAt: new Date().toISOString()
+      };
+      state.selectedClass = className;
+      state.sourceNames = names;
+      state.groups = [];
+      renderClassSelect();
+      renderGroups();
+      updateStats();
+      saveStorage();
+      showToast(`Saved "${className}" with ${names.length} students.`);
+    }
+
+    function deleteClass() {
+      if (!state.selectedClass) return;
+      const className = state.selectedClass;
+      const ok = window.confirm(`Delete classlist "${className}"?`);
+      if (!ok) return;
+
+      delete state.classlists[className];
+      state.groups = [];
+      renderClassSelect();
+      loadSelectedClass();
+      saveStorage();
+      showToast(`Deleted "${className}".`);
+    }
+
+    function makeExportPayload() {
+      const names = classNamesSorted();
+      return {
+        version: EXPORT_VERSION,
+        exportedAt: new Date().toISOString(),
+        classlists: names.map((className) => ({
+          className,
+          names: state.classlists[className].names,
+          ...(Array.isArray(state.classlists[className].lockPairs) && state.classlists[className].lockPairs.length
+            ? { lockPairs: state.classlists[className].lockPairs }
+            : {})
+        }))
+      };
+    }
+
+    function exportJson() {
+      const payload = makeExportPayload();
+      if (!payload.classlists.length) {
+        showToast('No classlists to export yet.');
+        return;
+      }
+      const fileName = `classlists-${new Date().toISOString().slice(0, 10)}.json`;
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast(`Exported ${payload.classlists.length} classlists.`);
+    }
+
+    function collectImportClasslists(parsed) {
+      const out = {};
+      let skipped = 0;
+
+      function addList(className, names, lockPairsRaw) {
+        const cleanClassName = normalizeName(className);
+        if (!cleanClassName) {
+          skipped += 1;
+          return;
+        }
+        const cleanNames = Array.isArray(names) ? names.map(normalizeName).filter(Boolean) : [];
+        const unique = [];
+        const seen = new Set();
+        for (const student of cleanNames) {
+          const key = student.toLowerCase();
+          if (seen.has(key)) continue;
+          seen.add(key);
+          unique.push(student);
+        }
+        if (!unique.length) {
+          skipped += 1;
+          return;
+        }
+        out[cleanClassName] = {
+          names: unique,
+          lockPairs: normalizeLockPairs(lockPairsRaw, unique),
+          updatedAt: new Date().toISOString()
+        };
+      }
+
+      if (parsed && Array.isArray(parsed.classlists)) {
+        for (const entry of parsed.classlists) {
+          if (!entry || typeof entry !== 'object') {
+            skipped += 1;
+            continue;
+          }
+          addList(entry.className, entry.names, entry.lockPairs);
+        }
+      } else if (parsed && parsed.classlists && typeof parsed.classlists === 'object') {
+        for (const [className, entry] of Object.entries(parsed.classlists)) {
+          const names = entry && typeof entry === 'object' ? entry.names : null;
+          const lockPairs = entry && typeof entry === 'object' ? entry.lockPairs : null;
+          addList(className, names, lockPairs);
+        }
+      } else if (parsed && typeof parsed === 'object') {
+        for (const [className, maybeNames] of Object.entries(parsed)) {
+          if (!Array.isArray(maybeNames)) {
+            skipped += 1;
+            continue;
+          }
+          addList(className, maybeNames, null);
+        }
+      }
+
+      return { imported: out, skipped };
+    }
+
+    async function importJsonFile(file) {
+      try {
+        const text = await file.text();
+        const parsed = JSON.parse(text);
+        const { imported, skipped } = collectImportClasslists(parsed);
+        const incoming = Object.keys(imported);
+
+        if (!incoming.length) {
+          showToast('No valid classlists found in this file.');
+          return;
+        }
+
+        let added = 0;
+        let overwritten = 0;
+        for (const className of incoming) {
+          if (state.classlists[className]) overwritten += 1;
+          else added += 1;
+          state.classlists[className] = imported[className];
+        }
+
+        state.selectedClass = incoming[0];
+        renderClassSelect();
+        loadSelectedClass();
+        saveStorage();
+        showToast(`Import complete: ${added} added, ${overwritten} overwritten, ${skipped} skipped.`);
+      } catch (_err) {
+        showToast('Import failed. Please choose a valid JSON file.');
+      }
+    }
+
+    function shuffled(arr) {
+      const out = [...arr];
+      for (let i = out.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const temp = out[i];
+        out[i] = out[j];
+        out[j] = temp;
+      }
+      return out;
+    }
+
+    function generateGroups() {
+      if (!state.sourceNames.length) {
+        showToast('Load or save a classlist first.');
+        return;
+      }
+
+      const requested = Number.parseInt(el.groupsInput.value, 10);
+      if (!Number.isFinite(requested) || requested < 1) {
+        showToast('Enter a valid number of groups (minimum 1).');
+        return;
+      }
+      if (requested > state.sourceNames.length) {
+        showToast('Number of groups cannot exceed number of students.');
+        return;
+      }
+
+      const classEntry = state.classlists[state.selectedClass] || {};
+      const lockPairs = normalizeLockPairs(classEntry.lockPairs, state.sourceNames);
+      const result = lockPairs.length
+        ? constrainedBalancedGroups(state.sourceNames, requested, lockPairs)
+        : { groups: simpleBalancedGroups(state.sourceNames, requested), violations: 0 };
+
+      state.groups = result.groups;
+      state.lastGroupCount = requested;
+      renderGroups();
+
+      if (result.violations > 0) {
+        showToast(`Created ${requested} groups. ${result.violations} lock-pair conflict(s) remained.`);
+      } else {
+        showToast(`Created ${requested} groups from ${state.sourceNames.length} students.`);
+      }
+    }
+
+    async function copyGroupsToClipboard() {
+      if (!state.groups.length) {
+        showToast('Generate groups first.');
+        return;
+      }
+      const text = state.groups.map((group, idx) => {
+        const list = group.map((name) => `- ${name}`).join('\n');
+        return `Group ${idx + 1} (${group.length})\n${list}`;
+      }).join('\n\n');
+
+      try {
+        await navigator.clipboard.writeText(text);
+        showToast('Groups copied to clipboard.');
+      } catch (_err) {
+        showToast('Clipboard not available in this browser context.');
+      }
+    }
+
+    function wireEvents() {
+      el.saveClass.addEventListener('click', saveOrUpdateClass);
+      el.deleteClass.addEventListener('click', deleteClass);
+      el.importJson.addEventListener('click', () => el.jsonFile.click());
+      el.exportJson.addEventListener('click', exportJson);
+
+      el.classSelect.addEventListener('change', () => {
+        state.selectedClass = el.classSelect.value;
+        loadSelectedClass();
+        saveStorage();
+      });
+
+      el.jsonFile.addEventListener('change', async (event) => {
+        const input = event.target;
+        const file = input.files && input.files[0];
+        if (!file) return;
+        await importJsonFile(file);
+        input.value = '';
+      });
+
+      el.generate.addEventListener('click', generateGroups);
+      el.regenerate.addEventListener('click', () => {
+        if (!state.sourceNames.length) {
+          showToast('Load or save a classlist first.');
+          return;
+        }
+        if (!state.lastGroupCount) {
+          generateGroups();
+          return;
+        }
+        el.groupsInput.value = String(state.lastGroupCount);
+        generateGroups();
+      });
+      el.copy.addEventListener('click', copyGroupsToClipboard);
+      el.print.addEventListener('click', () => window.print());
+    }
+
+    function init() {
+      loadStorage();
+      renderClassSelect();
+      loadSelectedClass();
+      wireEvents();
+      updateStats();
+    }
+
+    init();
+  </script>
+</body>
+</html>
