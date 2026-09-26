@@ -10,7 +10,7 @@ A count down to the next timetable transition for STC.
 
 A tool for visualising seating plans
 
-* Live link: [https://paulbaumgarten.github.io/classroom-tools/seating-plan-tool.html](https://paulbaumgarten.github.io/classroom-tools/seating-plan-tool.html)
+* Live link: [https://paulbaumgarten.github.io/classroom-tools/seating-plan.html](https://paulbaumgarten.github.io/classroom-tools/seating-plan.html)
 
 Export your classlist from SMART, or create your own CSV with these fields: `Surname`, `Firstname`, `Tutor Group`, `IdNo`
 
