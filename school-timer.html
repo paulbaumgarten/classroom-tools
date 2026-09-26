@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Schedule Timer</title>
+    <style>
+        /* Fill the browser window and center the text */
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            display: grid;
+            place-items: center;
+            background-color: black;
+            color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden; /* Prevent scrollbars */
+            transition: background-color 0.5s ease;
+        }
+
+        #timer {
+            /* Responsive font size: 30% of the window width */
+            font-size: 30vw; 
+            font-weight: bold;
+            text-align: center;
+            user-select: none;
+            line-height: 1;
+        }
+
+        /* Color States */
+        .warning-15 { background-color: orange; }
+        .warning-5 { background-color: red; }
+    </style>
+</head>
+<body>
+
+    <div id="timer">--:--</div>
+
+    <script>
+        const ALARMS = [[8,15],[8,35],[9,40],[10,45],[11,15],[12,15],[13,20],[14,20],[15,20]];
+        const WED_ALARMS = [[8,15],[8,25],[9,30],[10,35],[11,15],[12,15],[13,20]];
+
+        function getNextAlarm() {
+            const now = new Date();
+            const day = now.getDay(); // 0=Sun, 3=Wed
+            const schedule = (day === 3) ? WED_ALARMS : ALARMS;
+
+            for (let [h, m] of schedule) {
+                let alarm = new Date();
+                alarm.setHours(h, m, 0, 0);
+                if (alarm > now) return alarm;
+            }
+
+            // If no more alarms today, get first alarm of tomorrow
+            let tomorrow = new Date();
+            tomorrow.setDate(now.getDate() + 1);
+            const nextDay = tomorrow.getDay();
+            const nextSchedule = (nextDay === 3) ? WED_ALARMS : ALARMS;
+            const [h, m] = nextSchedule[0];
+            tomorrow.setHours(h, m, 0, 0);
+            return tomorrow;
+        }
+
+        function update() {
+            const now = new Date();
+            const target = getNextAlarm();
+            const diffMs = target - now;
+            const diffSec = Math.floor(diffMs / 1000);
+
+            const mins = Math.floor(diffSec / 60);
+            const secs = diffSec % 60;
+
+            // Format string: MM:SS (or H:MM:SS if > 1 hour)
+            const displayMins = mins.toString().padStart(2, '0');
+            const displaySecs = secs.toString().padStart(2, '0');
+            document.getElementById('timer').innerText = `${displayMins}:${displaySecs}`;
+
+            // Background Logic
+            const body = document.body;
+            if (diffSec <= 300) { // 5 mins
+                body.className = 'warning-5';
+            } else if (diffSec <= 900) { // 15 mins
+                body.className = 'warning-15';
+            } else {
+                body.className = '';
+            }
+        }
+
+        // Run every second
+        setInterval(update, 1000);
+        update();
+    </script>
+</body>
+</html>
