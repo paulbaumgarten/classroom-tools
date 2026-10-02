@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Combinatorics & Binomials Explorer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4f46e5',
+                        secondary: '#ec4899',
+                        accent: '#14b8a6',
+                        background: '#f8fafc',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .math-font { font-family: 'Fira Code', monospace; }
+        
+        /* Custom Scrollbar for visualizer boxes */
+        .custom-scroll::-webkit-scrollbar { height: 8px; width: 8px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #e2e8f0; border-radius: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #64748b; }
+        
+        /* Tooltip styles */
+        .tooltip .tooltip-text {
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .pascal-row { display: flex; justify-content: center; margin-bottom: 0.5rem; }
+        .pascal-cell {
+            width: 3rem; height: 3rem; display: flex; align-items: center; justify-content: center;
+            border-radius: 50%; font-weight: 600; margin: 0 0.25rem; transition: all 0.3s ease;
+            background-color: white; border: 2px solid #e2e8f0; cursor: pointer;
+        }
+        .pascal-cell.highlight {
+            background-color: #ec4899; color: white; border-color: #ec4899;
+            transform: scale(1.1); box-shadow: 0 4px 6px -1px rgba(236, 72, 153, 0.5);
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased min-h-screen flex flex-col">
+
+    <header class="bg-indigo-600 text-white shadow-lg py-6 px-4 sm:px-6 lg:px-8 z-10 relative">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center">
+            <div>
+                <h1 class="text-3xl font-bold tracking-tight">Math Explorer</h1>
+                <p class="text-indigo-100 mt-1">Combinations, Permutations & Binomials</p>
+            </div>
+            <div class="mt-4 sm:mt-0 flex gap-4 text-sm font-medium">
+                <a href="#section-perms" class="hover:text-indigo-200 transition">Permutations vs Combinations</a>
+                <a href="#section-binomial" class="hover:text-indigo-200 transition">Binomials & Pascal</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 space-y-12">
+
+        <!-- SECTION 1: Permutations vs Combinations -->
+        <section id="section-perms" class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="border-b border-slate-200 bg-slate-50 px-6 py-4 flex items-center gap-3">
+                <div class="bg-indigo-100 text-indigo-700 p-2 rounded-lg">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                </div>
+                <h2 class="text-2xl font-bold text-slate-800">1. Permutations (nPr) vs Combinations (nCr)</h2>
+            </div>
+            
+            <div class="p-6 grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Inputs & Controls -->
+                <div class="col-span-1 space-y-6">
+                    <div class="bg-slate-50 p-5 rounded-xl border border-slate-100">
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Total Items (n)</label>
+                        <div class="flex items-center gap-4">
+                            <input type="range" id="input-n" min="1" max="10" value="4" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600">
+                            <span id="display-n" class="font-bold text-xl text-indigo-600 w-8 text-center bg-indigo-50 p-1 rounded">4</span>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-2">The total pool of unique items available.</p>
+                    </div>
+                    
+                    <div class="bg-slate-50 p-5 rounded-xl border border-slate-100">
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Items to Choose (r)</label>
+                        <div class="flex items-center gap-4">
+                            <input type="range" id="input-r" min="1" max="10" value="2" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-secondary">
+                            <span id="display-r" class="font-bold text-xl text-secondary w-8 text-center bg-pink-50 p-1 rounded">2</span>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-2">How many items we pick from the total.</p>
+                    </div>
+
+                    <div class="text-sm bg-blue-50 border border-blue-100 p-4 rounded-lg text-blue-800">
+                        <strong class="block mb-1">Key Concept:</strong>
+                        <ul class="list-disc pl-5 space-y-1">
+                            <li><strong>Combinations:</strong> Order <em>does not</em> matter. Choosing {A, B} is the same as {B, A}.</li>
+                            <li><strong>Permutations:</strong> Order <em>does</em> matter. AB and BA are two different permutations.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Math Output -->
+                <div class="col-span-1 lg:col-span-2 space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- nCr Display -->
+                        <div class="bg-white border-2 border-slate-200 rounded-xl p-5 shadow-sm relative overflow-hidden group">
+                            <div class="absolute top-0 left-0 w-1 h-full bg-indigo-500"></div>
+                            <h3 class="text-lg font-bold text-slate-800 mb-2 flex justify-between items-center">
+                                Combinations (nCr)
+                                <span class="bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded-full">Order doesn't matter</span>
+                            </h3>
+                            <div class="math-font text-slate-600 bg-slate-50 p-3 rounded-lg mb-3">
+                                <sub>n</sub>C<sub>r</sub> = <span class="inline-block align-middle text-center"><span class="border-b border-slate-400 block pb-1">n!</span><span class="block pt-1">r!(n-r)!</span></span>
+                            </div>
+                            <div class="flex items-end gap-2">
+                                <span class="text-3xl font-black text-indigo-600" id="result-ncr">6</span>
+                                <span class="text-sm text-slate-500 mb-1 font-medium">possible groups</span>
+                            </div>
+                        </div>
+
+                        <!-- nPr Display -->
+                        <div class="bg-white border-2 border-slate-200 rounded-xl p-5 shadow-sm relative overflow-hidden group">
+                            <div class="absolute top-0 left-0 w-1 h-full bg-secondary"></div>
+                            <h3 class="text-lg font-bold text-slate-800 mb-2 flex justify-between items-center">
+                                Permutations (nPr)
+                                <span class="bg-pink-100 text-pink-800 text-xs px-2 py-1 rounded-full">Order matters</span>
+                            </h3>
+                            <div class="math-font text-slate-600 bg-slate-50 p-3 rounded-lg mb-3">
+                                <sub>n</sub>P<sub>r</sub> = <span class="inline-block align-middle text-center"><span class="border-b border-slate-400 block pb-1">n!</span><span class="block pt-1">(n-r)!</span></span>
+                            </div>
+                            <div class="flex items-end gap-2">
+                                <span class="text-3xl font-black text-secondary" id="result-npr">12</span>
+                                <span class="text-sm text-slate-500 mb-1 font-medium">possible arrangements</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Visualizer Blocks -->
+                    <div class="bg-slate-900 rounded-xl p-5 shadow-inner">
+                        <h4 class="text-white font-semibold mb-4 flex items-center justify-between">
+                            <span>Visualizer</span>
+                            <span class="text-xs text-slate-400 font-normal" id="visualizer-warning"></span>
+                        </h4>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <h5 class="text-indigo-300 text-sm font-semibold mb-2">Combinations (Groups):</h5>
+                                <div id="vis-combinations" class="flex flex-wrap gap-2 max-h-32 overflow-y-auto custom-scroll p-1">
+                                    <!-- Populated by JS -->
+                                </div>
+                            </div>
+                            <div class="border-t border-slate-700 pt-4">
+                                <h5 class="text-pink-300 text-sm font-semibold mb-2">Permutations (Arrangements):</h5>
+                                <div id="vis-permutations" class="flex flex-wrap gap-2 max-h-40 overflow-y-auto custom-scroll p-1">
+                                    <!-- Populated by JS -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 2: Binomials & Pascal's Triangle -->
+        <section id="section-binomial" class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden mb-12">
+            <div class="border-b border-slate-200 bg-slate-50 px-6 py-4 flex items-center gap-3">
+                <div class="bg-teal-100 text-teal-700 p-2 rounded-lg">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                </div>
+                <h2 class="text-2xl font-bold text-slate-800">2. Binomial Expansion & Pascal's Triangle</h2>
+            </div>
+
+            <div class="p-6 grid grid-cols-1 lg:grid-cols-4 gap-8">
+                <!-- Inputs & Formula -->
+                <div class="col-span-1 lg:col-span-1 space-y-6">
+                    <div class="bg-slate-50 p-5 rounded-xl border border-slate-100">
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Power (n)</label>
+                        <div class="flex items-center gap-4">
+                            <input type="range" id="input-power" min="0" max="8" value="3" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-accent">
+                            <span id="display-power" class="font-bold text-xl text-accent w-8 text-center bg-teal-50 p-1 rounded">3</span>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-2">Expands the expression (a + b)<sup>n</sup></p>
+                    </div>
+
+                    <div class="text-sm bg-amber-50 border border-amber-100 p-4 rounded-lg text-amber-800">
+                        <strong class="block mb-1">The Magic Connection:</strong>
+                        <p>The coefficients of your expanded binomial exactly match the numbers in the <em>n</em>th row of Pascal's Triangle! Furthermore, those numbers are calculated using the <strong>Combinations (nCr)</strong> formula.</p>
+                    </div>
+                </div>
+
+                <!-- Pascal & Equation Display -->
+                <div class="col-span-1 lg:col-span-3 space-y-6">
+                    
+                    <div class="bg-white border-2 border-slate-200 rounded-xl p-5 shadow-sm text-center">
+                        <h3 class="text-lg font-bold text-slate-800 mb-4">Expanded Equation</h3>
+                        <div class="inline-block bg-slate-50 py-3 px-6 rounded-xl border border-slate-200 math-font text-lg md:text-xl text-slate-700" id="binomial-equation">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-50 border-2 border-slate-200 rounded-xl p-5 shadow-sm overflow-x-auto custom-scroll relative">
+                        <h3 class="text-lg font-bold text-slate-800 mb-4 text-center">Pascal's Triangle</h3>
+                        
+                        <!-- Tooltip anchor for dynamic insertion -->
+                        <div id="pascal-tooltip" class="absolute hidden bg-slate-800 text-white text-sm px-3 py-2 rounded shadow-lg pointer-events-none z-20 whitespace-nowrap math-font">
+                            Tool tip text
+                        </div>
+
+                        <div id="pascal-container" class="min-w-[600px] pb-4">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // --- MATH UTILITIES ---
+        function factorial(n) {
+            if (n === 0 || n === 1) return 1;
+            let result = 1;
+            for (let i = 2; i <= n; i++) result *= i;
+            return result;
+        }
+
+        function nPr(n, r) {
+            if (r > n) return 0;
+            return factorial(n) / factorial(n - r);
+        }
+
+        function nCr(n, r) {
+            if (r > n) return 0;
+            return nPr(n, r) / factorial(r);
+        }
+
+        // --- STATE VARIABLES ---
+        let state = {
+            n: 4,
+            r: 2,
+            power: 3,
+            items: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'],
+            colors: ['#ef4444', '#f97316', '#eab308', '#22c55e', '#06b6d4', '#3b82f6', '#8b5cf6', '#d946ef', '#f43f5e', '#64748b']
+        };
+
+        // --- DOM ELEMENTS: SECTION 1 ---
+        const elInputN = document.getElementById('input-n');
+        const elDisplayN = document.getElementById('display-n');
+        const elInputR = document.getElementById('input-r');
+        const elDisplayR = document.getElementById('display-r');
+        const elResultNcr = document.getElementById('result-ncr');
+        const elResultNpr = document.getElementById('result-npr');
+        const elVisCombinations = document.getElementById('vis-combinations');
+        const elVisPermutations = document.getElementById('vis-permutations');
+        const elVisWarning = document.getElementById('visualizer-warning');
+
+        // --- DOM ELEMENTS: SECTION 2 ---
+        const elInputPower = document.getElementById('input-power');
+        const elDisplayPower = document.getElementById('display-power');
+        const elBinomialEq = document.getElementById('binomial-equation');
+        const elPascalContainer = document.getElementById('pascal-container');
+        const elPascalTooltip = document.getElementById('pascal-tooltip');
+
+        // --- ALGORITHMS FOR VISUALIZER ---
+        function getCombinations(arr, r) {
+            let result = [];
+            function combine(start, currentCombo) {
+                if (currentCombo.length === r) {
+                    result.push([...currentCombo]);
+                    return;
+                }
+                for (let i = start; i < arr.length; i++) {
+                    currentCombo.push(arr[i]);
+                    combine(i + 1, currentCombo);
+                    currentCombo.pop();
+                }
+            }
+            combine(0, []);
+            return result;
+        }
+
+        function getPermutations(arr) {
+            if (arr.length === 0) return [[]];
+            let result = [];
+            for (let i = 0; i < arr.length; i++) {
+                let rest = getPermutations(arr.slice(0, i).concat(arr.slice(i + 1)));
+                for (let p of rest) {
+                    result.push([arr[i], ...p]);
+                }
+            }
+            return result;
+        }
+
+        // --- RENDER SECTION 1 ---
+        function createBadge(itemIndex) {
+            return `<span class="inline-flex items-center justify-center w-6 h-6 rounded text-xs font-bold text-white shadow-sm" style="background-color: ${state.colors[itemIndex]}">${state.items[itemIndex]}</span>`;
+        }
+
+        function updateSection1() {
+            // Math Update
+            const combos = nCr(state.n, state.r);
+            const perms = nPr(state.n, state.r);
+            
+            // Format large numbers with commas
+            elResultNcr.innerText = combos.toLocaleString();
+            elResultNpr.innerText = perms.toLocaleString();
+
+            // Visualizer Update
+            let activeItems = Array.from({length: state.n}, (_, i) => i);
+            let comboArrays = getCombinations(activeItems, state.r);
+            
+            // Limit rendering to prevent DOM crash
+            const maxComboRender = 60;
+            const maxPermRender = 120;
+            
+            let comboHTML = '';
+            let renderedCombos = Math.min(comboArrays.length, maxComboRender);
+            
+            for (let i = 0; i < renderedCombos; i++) {
+                const groupHtml = comboArrays[i].map(idx => createBadge(idx)).join('');
+                comboHTML += `<div class="flex bg-slate-800 border border-slate-700 p-1 rounded gap-1">${groupHtml}</div>`;
+            }
+            if (comboArrays.length > maxComboRender) {
+                comboHTML += `<div class="flex items-center text-slate-400 text-xs px-2">+ ${comboArrays.length - maxComboRender} more groups...</div>`;
+            }
+            elVisCombinations.innerHTML = comboHTML;
+
+            let permHTML = '';
+            let permCount = 0;
+            
+            // Generate permutations grouped by combination to show relationship
+            for (let i = 0; i < comboArrays.length; i++) {
+                if (permCount >= maxPermRender) break;
+                
+                let permsForCombo = getPermutations(comboArrays[i]);
+                for (let j = 0; j < permsForCombo.length; j++) {
+                    if (permCount >= maxPermRender) break;
+                    const arrHtml = permsForCombo[j].map(idx => createBadge(idx)).join('');
+                    permHTML += `<div class="flex bg-slate-800 border border-slate-600 p-1 rounded gap-1">${arrHtml}</div>`;
+                    permCount++;
+                }
+            }
+
+            if (perms > maxPermRender) {
+                permHTML += `<div class="flex items-center text-slate-400 text-xs px-2">+ ${(perms - maxPermRender).toLocaleString()} more arrangements...</div>`;
+                elVisWarning.innerText = `Showing partial visualization to save browser memory.`;
+            } else {
+                elVisWarning.innerText = '';
+            }
+            elVisPermutations.innerHTML = permHTML;
+        }
+
+        // Listeners for Section 1
+        elInputN.addEventListener('input', (e) => {
+            state.n = parseInt(e.target.value);
+            elDisplayN.innerText = state.n;
+            
+            // Ensure r is not greater than n
+            if (state.r > state.n) {
+                state.r = state.n;
+                elInputR.value = state.r;
+                elDisplayR.innerText = state.r;
+            }
+            // Update r max
+            elInputR.max = state.n;
+            
+            updateSection1();
+        });
+
+        elInputR.addEventListener('input', (e) => {
+            state.r = parseInt(e.target.value);
+            elDisplayR.innerText = state.r;
+            updateSection1();
+        });
+
+
+        // --- RENDER SECTION 2 ---
+        function updateSection2() {
+            // 1. Generate Equation string
+            let eqHTML = `(a + b)<sup>${state.power}</sup> = `;
+            let terms = [];
+            
+            for (let k = 0; k <= state.power; k++) {
+                let coeff = nCr(state.power, k);
+                let powerA = state.power - k;
+                let powerB = k;
+                
+                let termStr = '';
+                // Highlight coeff in pink to match pascal highlight
+                termStr += `<span class="font-bold text-pink-600">${coeff}</span>`;
+                
+                if (powerA > 0) termStr += `a${powerA > 1 ? `<sup>${powerA}</sup>` : ''}`;
+                if (powerB > 0) termStr += `b${powerB > 1 ? `<sup>${powerB}</sup>` : ''}`;
+                
+                terms.push(termStr);
+            }
+            elBinomialEq.innerHTML = eqHTML + terms.join(' + ');
+
+            // 2. Generate Pascal's Triangle HTML
+            let pascalHTML = '';
+            for (let row = 0; row <= 8; row++) {
+                let isHighlightedRow = (row === state.power);
+                let rowHTML = `<div class="pascal-row" data-row="${row}">`;
+                
+                for (let col = 0; col <= row; col++) {
+                    let val = nCr(row, col);
+                    let classNames = "pascal-cell";
+                    if (isHighlightedRow) classNames += " highlight";
+                    
+                    rowHTML += `<div class="${classNames}" 
+                                     data-row="${row}" 
+                                     data-col="${col}"
+                                     onmouseenter="showPascalTooltip(event, ${row}, ${col})"
+                                     onmouseleave="hidePascalTooltip()">
+                                     ${val}
+                                </div>`;
+                }
+                rowHTML += `</div>`;
+                pascalHTML += rowHTML;
+            }
+            elPascalContainer.innerHTML = pascalHTML;
+        }
+
+        // Tooltip handlers for Pascal's Triangle
+        window.showPascalTooltip = function(e, row, col) {
+            let ncrValue = nCr(row, col);
+            elPascalTooltip.innerHTML = `Row ${row}, Pos ${col}<br/><sub>${row}</sub>C<sub>${col}</sub> = ${ncrValue}`;
+            elPascalTooltip.style.display = 'block';
+            
+            // Position near the cell
+            const cellRect = e.target.getBoundingClientRect();
+            const containerRect = elPascalContainer.parentElement.getBoundingClientRect();
+            
+            // Adjust relative to the scrolling container
+            const topPos = cellRect.top - containerRect.top - 50; 
+            const leftPos = cellRect.left - containerRect.left + (cellRect.width / 2) - 60;
+            
+            elPascalTooltip.style.top = `${topPos}px`;
+            elPascalTooltip.style.left = `${topPos < 0 ? 0 : leftPos}px`; // simple clamp
+            elPascalTooltip.classList.remove('hidden');
+        };
+
+        window.hidePascalTooltip = function() {
+            elPascalTooltip.classList.add('hidden');
+        };
+
+        // Listeners for Section 2
+        elInputPower.addEventListener('input', (e) => {
+            state.power = parseInt(e.target.value);
+            elDisplayPower.innerText = state.power;
+            updateSection2();
+        });
+
+        // Initialize App
+        updateSection1();
+        updateSection2();
+
+    </script>
+</body>
+</html>
